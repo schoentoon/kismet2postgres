@@ -9,7 +9,7 @@ script:
   - make clean
   - make CC=$CC
 after_script:
-  - ./bin/scib -D255 -T sample.config
+  - ./bin/kismet2postgres -D255 -T sample.config
 notifications:
   irc:
     channels:
