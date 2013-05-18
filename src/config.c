@@ -104,5 +104,8 @@ int startConnection(struct server* server, struct event_base* base) {
   bufferevent_socket_connect_hostname(server->conn, dns, AF_INET, server->address, server->port);
   bufferevent_setcb(server->conn, kismet_conn_readcb, NULL, kismet_conn_eventcb, server);
   bufferevent_enable(server->conn, EV_READ);
+  static const char* DISABLE_TIME = "!0 REMOVE TIME\n";
+  static const size_t DISABLE_TIME_LEN = 15;
+  bufferevent_write(server->conn, DISABLE_TIME, DISABLE_TIME_LEN);
   return 1;
 };
