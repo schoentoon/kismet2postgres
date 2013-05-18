@@ -13,12 +13,21 @@
 #include <event2/dns.h>
 #include <event2/bufferevent.h>
 
+struct inserter {
+  char* type;
+  char* query;
+  char** capabilities;
+  unsigned char ack_id;
+  struct inserter* next;
+};
+
 struct server {
   char* address;
   unsigned short port;
   unsigned char timeout;
-  struct server* next;
+  struct inserter* inserters;
   struct bufferevent* conn;
+  struct server* next;
 };
 
 struct config {

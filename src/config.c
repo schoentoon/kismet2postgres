@@ -36,6 +36,7 @@ int parse_config(char* config_file) {
   }
   global_config = malloc(sizeof(struct config));
   struct server* current_server = NULL;
+  struct inserter* inserter = NULL;
   char line_buffer[BUFSIZ];
   unsigned int line_count = 0;
   while (fgets(line_buffer, sizeof(line_buffer), f)) {
@@ -55,24 +56,40 @@ int parse_config(char* config_file) {
           current_server = malloc(sizeof(struct server));
           memset(current_server, 0, sizeof(struct server));
           global_config->servers = current_server;
-        };
+        }
         current_server->timeout = 90;
         current_server->address = strdup(value);
-      } else if (strcasecmp(key, "port") == 0) {
+        inserter = NULL;
+      } else if (current_server && strcasecmp(key, "port") == 0) {
         long port = strtol(value, NULL, 10);
         if ((errno == ERANGE || (port == LONG_MAX || port == LONG_MIN)) || (errno != 0 && port == 0) || port < 0 || port > 65535) {
           fprintf(stderr, "Error at line %d. Port %ld is out of range.\n", line_count, port);
           return 0;
         } else
           current_server->port = port;
-      } else if (strcasecmp(key, "timeout") == 0) {
+      } else if (current_server && strcasecmp(key, "timeout") == 0) {
         long timeout = strtol(value, NULL, 10);
         if ((errno == ERANGE || (timeout == LONG_MAX || timeout == LONG_MIN)) || (errno != 0 && timeout == 0) || timeout < 0 || timeout > 255) {
           fprintf(stderr, "Error at line %d. Timeout %ld is out of range. (0-255)\n", line_count, timeout);
           return 0;
         } else
           current_server->timeout = (unsigned char) timeout;
-      };
+      } else if (current_server && strcasecmp(key, "type") == 0) {
+        if (inserter) {
+          inserter->next = malloc(sizeof(struct inserter));
+          inserter = inserter->next;
+          memset(inserter, 0, sizeof(struct inserter));
+        } else {
+          inserter = malloc(sizeof(struct inserter));
+          memset(inserter, 0, sizeof(struct inserter));
+          current_server->inserters = inserter;
+        }
+        inserter->type = strdup(value);
+      } else if (inserter && strcasecmp(key, "query") == 0) {
+        if (inserter->query)
+          free(inserter->query);
+        inserter->query = strdup(value);
+      }
     } else {
       fprintf(stderr, "Parsing error at line %d.\n", line_count);
       return 0;
@@ -107,5 +124,14 @@ int startConnection(struct server* server, struct event_base* base) {
   static const char* DISABLE_TIME = "!0 REMOVE TIME\n";
   static const size_t DISABLE_TIME_LEN = 15;
   bufferevent_write(server->conn, DISABLE_TIME, DISABLE_TIME_LEN);
+  struct evbuffer* output = bufferevent_get_output(server->conn);
+  struct inserter* node = server->inserters;
+  unsigned char id = 0;
+  while (node) {
+    static const char* CAPABILITY_REQUEST = "!%d CAPABILITY %s\n";
+    node->ack_id = ++id;
+    evbuffer_add_printf(output, CAPABILITY_REQUEST, node->ack_id, node->type);
+    node = node->next;
+  };
   return 1;
 };
