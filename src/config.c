@@ -10,6 +10,7 @@
 #include "config.h"
 
 #include "debug.h"
+#include "callbacks.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -70,7 +71,7 @@ int parse_config(char* config_file) {
           fprintf(stderr, "Error at line %d. Timeout %ld is out of range. (0-255)\n", line_count, timeout);
           return 0;
         } else
-          current_server->port = (unsigned char) timeout;
+          current_server->timeout = (unsigned char) timeout;
       };
     } else {
       fprintf(stderr, "Parsing error at line %d.\n", line_count);
@@ -101,5 +102,7 @@ int startConnection(struct server* server, struct event_base* base) {
   struct timeval timeout = {server->timeout, 0};
   bufferevent_set_timeouts(server->conn, &timeout, NULL);
   bufferevent_socket_connect_hostname(server->conn, dns, AF_INET, server->address, server->port);
+  bufferevent_setcb(server->conn, kismet_conn_readcb, NULL, kismet_conn_eventcb, server);
+  bufferevent_enable(server->conn, EV_READ);
   return 1;
 };
