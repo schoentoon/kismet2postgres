@@ -12,6 +12,7 @@
 #include "debug.h"
 #include "callbacks.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -85,6 +86,9 @@ int parse_config(char* config_file) {
           current_server->inserters = inserter;
         }
         inserter->type = strdup(value);
+        int i;
+        for (i = 0; i < strlen(inserter->type); i++)
+          inserter->type[i] = toupper(inserter->type[i]);
       } else if (inserter && strcasecmp(key, "query") == 0) {
         if (inserter->query)
           free(inserter->query);

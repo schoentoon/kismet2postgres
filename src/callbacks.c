@@ -11,6 +11,7 @@
 
 #include "debug.h"
 #include "config.h"
+#include "query_printf.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -29,6 +30,7 @@ void kismet_conn_readcb(struct bufferevent *bev, void* args) {
   while (line) {
     DEBUG(255, "Input: '%s'", line);
     static const char* CAPABILITY_SSCANF = "*CAPABILITY: %s %[^\n]";
+    static const char* GENERAL_HEADER_SSCANF = "*%[A-Z]: %[^\n]";
     char type[BUFSIZ];
     char rest[BUFSIZ];
     if (sscanf(line, CAPABILITY_SSCANF, type, rest) == 2) {
@@ -40,7 +42,6 @@ void kismet_conn_readcb(struct bufferevent *bev, void* args) {
       };
       if (inserter && !inserter->capabilities) {
         char* token = strtok(rest, ",");
-        DEBUG(255, "sizeof(char*) = %d", sizeof(char*));
         while (token) {
           unsigned int next_token = 0;
           if (inserter->capabilities) {
@@ -54,6 +55,18 @@ void kismet_conn_readcb(struct bufferevent *bev, void* args) {
         };
         static const char* ENABLE_EVENT = "!%d ENABLE %s *\n";
         evbuffer_add_printf(output, ENABLE_EVENT, inserter->ack_id, inserter->type);
+      };
+    } else if (sscanf(line, GENERAL_HEADER_SSCANF, type, rest) == 2) {
+      struct inserter* inserter = server->inserters;
+      while (inserter) {
+        if (strcmp(inserter->type, type) == 0) {
+          char query[1024*64]; /* Should be plenty */
+          memset(query, 0, 1024*64);
+          if (query_printf(query, rest, inserter))
+            DEBUG(255, "Query: '%s'", query);
+          break;
+        }
+        inserter = inserter->next;
       };
     };
     free(line);

@@ -3,7 +3,7 @@ INC    := -Iinclude $(INC)
 LFLAGS := -levent
 CC     := gcc
 BINARY := kismet2postgres
-DEPS   := build/main.o build/debug.o build/config.o build/callbacks.o
+DEPS   := build/main.o build/debug.o build/config.o build/callbacks.o build/query_printf.o
 
 .PHONY: all clean
 
@@ -23,6 +23,9 @@ build/config.o: src/config.c include/config.h
 
 build/callbacks.o: src/callbacks.c include/callbacks.h
 	$(CC) $(CFLAGS) $(INC) -c -o build/callbacks.o src/callbacks.c
+
+build/query_printf.o: src/query_printf.c include/query_printf.h
+	$(CC) $(CFLAGS) $(INC) -c -o build/query_printf.o src/query_printf.c
 
 bin/$(BINARY): $(DEPS)
 	$(CC) $(CFLAGS) $(INC) -o bin/$(BINARY) $(DEPS) $(LFLAGS)
