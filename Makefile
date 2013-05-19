@@ -1,9 +1,9 @@
 CFLAGS := $(CFLAGS) -Wall -O2 -mtune=native -g
 INC    := -Iinclude $(INC)
-LFLAGS := -levent
+LFLAGS := -levent -lpq
 CC     := gcc
 BINARY := kismet2postgres
-DEPS   := build/main.o build/debug.o build/config.o build/callbacks.o build/query_printf.o
+DEPS   := build/main.o build/debug.o build/config.o build/callbacks.o build/query_printf.o build/postgres.o
 
 .PHONY: all clean
 
@@ -26,6 +26,9 @@ build/callbacks.o: src/callbacks.c include/callbacks.h
 
 build/query_printf.o: src/query_printf.c include/query_printf.h
 	$(CC) $(CFLAGS) $(INC) -c -o build/query_printf.o src/query_printf.c
+
+build/postgres.o: src/postgres.c include/postgres.h
+	$(CC) $(CFLAGS) $(INC) -c -o build/postgres.o src/postgres.c
 
 bin/$(BINARY): $(DEPS)
 	$(CC) $(CFLAGS) $(INC) -o bin/$(BINARY) $(DEPS) $(LFLAGS)

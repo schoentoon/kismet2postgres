@@ -10,6 +10,8 @@
 #ifndef _CONFIG_H
 #define _CONFIG_H
 
+#include "postgres.h"
+
 #include <event2/dns.h>
 #include <event2/bufferevent.h>
 
@@ -25,12 +27,14 @@ struct server {
   char* address;
   unsigned short port;
   unsigned char timeout;
+  struct connection_struct* db;
   struct inserter* inserters;
   struct bufferevent* conn;
   struct server* next;
 };
 
 struct config {
+  char* conninfo;
   struct server* servers;
 };
 

@@ -62,8 +62,10 @@ void kismet_conn_readcb(struct bufferevent *bev, void* args) {
         if (strcmp(inserter->type, type) == 0) {
           char query[1024*64]; /* Should be plenty */
           memset(query, 0, 1024*64);
-          if (query_printf(query, rest, inserter))
+          if (query_printf(query, rest, inserter)) {
             DEBUG(255, "Query: '%s'", query);
+            databaseQuery(server->db, query, NULL, NULL);
+          }
           break;
         }
         inserter = inserter->next;

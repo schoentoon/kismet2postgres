@@ -10,6 +10,7 @@
 #include "config.h"
 
 #include "debug.h"
+#include "postgres.h"
 #include "callbacks.h"
 
 #include <ctype.h>
@@ -36,6 +37,7 @@ int parse_config(char* config_file) {
     return 0;
   }
   global_config = malloc(sizeof(struct config));
+  memset(global_config, 0, sizeof(struct config));
   struct server* current_server = NULL;
   struct inserter* inserter = NULL;
   char line_buffer[BUFSIZ];
@@ -48,7 +50,10 @@ int parse_config(char* config_file) {
     char value[BUFSIZ];
     if (sscanf(line_buffer, "%[a-z_] = %[^\t\n]", key, value) == 2) {
       DEBUG(255, "key: '%s', value: '%s'", key, value);
-      if (strcasecmp(key, "address") == 0) {
+      if (strcasecmp(key, "conninfo") == 0) {
+        free(db_connect);
+        db_connect = strdup(value);
+      } else if (strcasecmp(key, "address") == 0) {
         if (current_server) {
           current_server->next = malloc(sizeof(struct server));
           current_server = current_server->next;
@@ -110,6 +115,9 @@ int dispatch_config(struct event_base* base) {
   if (!dns)
     dns = evdns_base_new(base, 1);
   while (node) {
+    node->db = initDatabase(base);
+    node->db->report_errors = 1;
+    node->db->autocommit = 1;
     startConnection(node, base);
     node = node->next;
   };
