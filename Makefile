@@ -1,5 +1,5 @@
 CFLAGS := $(CFLAGS) -Wall -O2 -mtune=native -g
-INC    := -Iinclude $(INC)
+INC    := -Iinclude -I/usr/include/postgresql $(INC)
 LFLAGS := -levent -lpq
 CC     := gcc
 BINARY := kismet2postgres
