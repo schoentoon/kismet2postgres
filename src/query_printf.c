@@ -49,8 +49,13 @@ int query_printf(char* buf, char* data, struct inserter* inserter) {
                 }
               }
             };
-            while (*rest != ' ')
+            while (*rest != ' ') {
+              if (*rest == '\001') {
+                rest++;
+                continue;
+              }
               *buf++ = *rest++;
+            }
           }
           break;
         };
