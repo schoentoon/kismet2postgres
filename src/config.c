@@ -80,7 +80,9 @@ int parse_config(char* config_file) {
           return 0;
         } else
           current_server->timeout = (unsigned char) timeout;
-      } else if (current_server && strcasecmp(key, "type") == 0) {
+      } else if (current_server && strcasecmp(key, "disable_time") == 0)
+        current_server->disable_time = 1;
+      else if (current_server && strcasecmp(key, "type") == 0) {
         if (inserter) {
           inserter->next = malloc(sizeof(struct inserter));
           inserter = inserter->next;
@@ -133,9 +135,11 @@ int startConnection(struct server* server, struct event_base* base) {
   bufferevent_socket_connect_hostname(server->conn, dns, AF_INET, server->address, server->port);
   bufferevent_setcb(server->conn, kismet_conn_readcb, NULL, kismet_conn_eventcb, server);
   bufferevent_enable(server->conn, EV_READ);
-  static const char* DISABLE_TIME = "!0 REMOVE TIME\n";
-  static const size_t DISABLE_TIME_LEN = 15;
-  bufferevent_write(server->conn, DISABLE_TIME, DISABLE_TIME_LEN);
+  if (server->disable_time) {
+    static const char* DISABLE_TIME = "!0 REMOVE TIME\n";
+    static const size_t DISABLE_TIME_LEN = 15;
+    bufferevent_write(server->conn, DISABLE_TIME, DISABLE_TIME_LEN);
+  }
   struct evbuffer* output = bufferevent_get_output(server->conn);
   struct inserter* node = server->inserters;
   unsigned char id = 0;

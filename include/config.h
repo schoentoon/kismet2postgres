@@ -27,6 +27,7 @@ struct server {
   char* address;
   unsigned short port;
   unsigned char timeout;
+  unsigned char disable_time : 1;
   struct connection_struct* db;
   struct inserter* inserters;
   struct bufferevent* conn;
