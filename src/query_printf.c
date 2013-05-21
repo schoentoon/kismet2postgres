@@ -49,8 +49,10 @@ int query_printf(char* buf, char* data, struct inserter* inserter) {
                 }
               }
             };
-            while (*rest != ' ') {
+            unsigned char spaces = 0;
+            while (*rest != '\0' && (spaces == 0 && *rest != ' ')) {
               if (*rest == '\001') {
+                spaces = (spaces == 0 ? 1 : 0);
                 rest++;
                 continue;
               }
