@@ -99,6 +99,17 @@ void kismet_conn_eventcb(struct bufferevent *bev, short event, void* args) {
     struct reconnect_struct* reconnect_struct = malloc(sizeof(struct reconnect_struct));
     reconnect_struct->server = node;
     reconnect_struct->base = base;
+    struct inserter* inserter = node->inserters;
+    while (inserter) {
+      if (inserter->capabilities) {
+        unsigned int next_token = 0;
+        while (inserter->capabilities[next_token])
+          free(inserter->capabilities[next_token++]);
+        free(inserter->capabilities);
+        inserter->capabilities = NULL;
+      }
+      inserter = inserter->next;
+    };
     event_base_once(base, -1, EV_TIMEOUT, reconnectServer, reconnect_struct, &tv);
   }
 };
